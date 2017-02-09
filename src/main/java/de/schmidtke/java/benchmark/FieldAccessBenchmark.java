@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.State;
 
 public class FieldAccessBenchmark {
 
@@ -20,28 +22,35 @@ public class FieldAccessBenchmark {
         }
     }
 
-    private final PrintWriter devNull;
+    @State(value = Scope.Thread)
+    public static class DevNull {
+        private final PrintWriter devNull;
 
-    public FieldAccessBenchmark() {
-        try {
-            devNull = new PrintWriter(new File("/dev/null"));
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Not compatible with Windows.");
+        public DevNull() {
+            try {
+                devNull = new PrintWriter(new File("/dev/null"));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Not compatible with Windows.");
+            }
+        }
+
+        public void write(long l) {
+            devNull.println(l);
         }
     }
 
     @Benchmark
-    public void testFieldAccess() {
+    public void testFieldAccess(DevNull devNull) {
         Obj o = new Obj();
         o.l = System.currentTimeMillis();
-        devNull.println(o.l);
+        devNull.write(o.l);
     }
 
     @Benchmark
-    public void testGetSet() {
+    public void testGetSet(DevNull devNull) {
         Obj o = new Obj();
         o.setL(System.currentTimeMillis());
-        devNull.println(o.getL());
+        devNull.write(o.getL());
     }
 
 }

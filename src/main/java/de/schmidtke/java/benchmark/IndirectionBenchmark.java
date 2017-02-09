@@ -36,6 +36,8 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.State;
 
 public class IndirectionBenchmark {
 
@@ -87,33 +89,40 @@ public class IndirectionBenchmark {
         }
     }
 
-    private final PrintWriter devNull;
+    @State(value = Scope.Thread)
+    public static class DevNull {
+        private final PrintWriter devNull;
 
-    public IndirectionBenchmark() {
-        try {
-            devNull = new PrintWriter(new File("/dev/null"));
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Not compatible with Windows.");
+        public DevNull() {
+            try {
+                devNull = new PrintWriter(new File("/dev/null"));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Not compatible with Windows.");
+            }
+        }
+
+        public void write(long l) {
+            devNull.println(l);
         }
     }
 
     @Benchmark
-    public void testNoIndirection() {
-        devNull.println(new Direct(System.currentTimeMillis()).getI());
+    public void testNoIndirection(DevNull devNull) {
+        devNull.write(new Direct(System.currentTimeMillis()).getI());
     }
 
     @Benchmark
-    public void testOneIndirection() {
-        devNull.println(new Indirect1(System.currentTimeMillis()).getI());
+    public void testOneIndirection(DevNull devNull) {
+        devNull.write(new Indirect1(System.currentTimeMillis()).getI());
     }
 
     @Benchmark
-    public void testTwoIndirection() {
-        devNull.println(new Indirect2(System.currentTimeMillis()).getI());
+    public void testTwoIndirection(DevNull devNull) {
+        devNull.write(new Indirect2(System.currentTimeMillis()).getI());
     }
 
     @Benchmark
-    public void testThreeIndirection() {
-        devNull.println(new Indirect3(System.currentTimeMillis()).getI());
+    public void testThreeIndirection(DevNull devNull) {
+        devNull.write(new Indirect3(System.currentTimeMillis()).getI());
     }
 }
