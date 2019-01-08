@@ -9,59 +9,63 @@ import org.openjdk.jmh.annotations.State;
 public class MemoryLocationBenchmark {
 
     @State(Scope.Thread)
-    public static class Wrap {
+    public static class WrapState {
         ByteBuffer mem = ByteBuffer.wrap(new byte[8]);
         long l = System.currentTimeMillis();
     }
 
     @State(Scope.Thread)
-    public static class Heap {
+    public static class HeapState {
         ByteBuffer mem = ByteBuffer.allocate(8);
         long l = System.currentTimeMillis();
     }
 
     @State(Scope.Thread)
-    public static class OffHeap {
+    public static class OffHeapState {
         ByteBuffer mem = ByteBuffer.allocateDirect(8);
         long l = System.currentTimeMillis();
     }
 
-    @State(Scope.Thread)
     public static class Object {
-        private long v;
-        long l = System.currentTimeMillis();
+        private long l;
 
-        public void setLong(long v) {
-            this.v = v;
+        public void setLong(long l) {
+            this.l = l;
         }
 
         public long getLong() {
-            return v;
+            return this.l;
         }
     }
 
-    @Benchmark
-    public long benchmarkWrap(Wrap w) {
-        w.mem.putLong(0, w.l++);
-        return w.mem.getLong(0);
+    @State(Scope.Thread)
+    public static class ObjectState {
+        Object mem = new Object();
+        long l = System.currentTimeMillis();
     }
 
     @Benchmark
-    public long benchmarkHeap(Heap h) {
-        h.mem.putLong(0, h.l++);
-        return h.mem.getLong(0);
+    public long benchmarkWrap(WrapState s) {
+        s.mem.putLong(0, s.l++);
+        return s.mem.getLong(0);
     }
 
     @Benchmark
-    public long benchmarkOffHeap(OffHeap oh) {
-        oh.mem.putLong(0, oh.l++);
-        return oh.mem.getLong(0);
+    public long benchmarkHeap(HeapState s) {
+        s.mem.putLong(0, s.l++);
+        return s.mem.getLong(0);
     }
 
     @Benchmark
-    public long benchmarkObject(Object o) {
-        o.setLong(o.l++);
-        return o.getLong();
+    public long benchmarkOffHeap(OffHeapState s) {
+        s.mem.putLong(0, s.l++);
+        return s.mem.getLong(0);
+    }
+
+    @Benchmark
+    public long benchmarkObject(ObjectState s) {
+        s.mem.setLong(s.l++);
+        return s.mem.getLong();
     }
 
 }
